@@ -22,11 +22,17 @@ Send 0xFF to device which is not debugged. Send 0xAA to device which is debugged
 If master device connects first to phone you should see with debugger:
 
 [I]TS:call IRQ_handler
+
 [I]TS:IRQ_handler
+
 [I]TS:EVENTS_ADDRESS
+
 [I]TS:EVENTS_PAYLOAD
+
 [I]TS:EVENTS_PHYEND
+
 [I]TS:EVENTS_SYNC
+
 [I]TS:Sync packet received <xxx>
 
 if not master device connect first disconnect from it. After that you should see that slave get packets. 
@@ -36,9 +42,14 @@ if reconnect is done with slave receving packet should work.
 If master device is debugged after starting as master log should print every case:
 
 [I]TS:call IRQ_handler
+
 [I]TS:IRQ_handler
+
 [I]TS:EVENTS_ADDRESS
+
 [I]TS:EVENTS_PAYLOAD
+
 [I]TS:EVENTS_PHYEND
+
 [I]TS:packet sent: 23
 
