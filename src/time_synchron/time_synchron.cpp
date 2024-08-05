@@ -6,7 +6,7 @@
 
 #include "log/log.h"
 
-namespace notch {
+namespace test {
 
     TimeSynchron timeSynchron;
 

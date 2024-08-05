@@ -12,7 +12,7 @@
 
 #include <string>
 
-namespace  notch {
+namespace  test {
 
 #define SEC_PARAM_BOND                      1                                          /**< Perform bonding. */
 #define SEC_PARAM_MITM                      0                                          /**< Man In The Middle protection not required. */
@@ -32,7 +32,7 @@ namespace  notch {
                 0x43, 0x98, 0xBC, 0xEA, 0x5F, 0x78, 0x23, 0x15, 0xDE, 0xEF, 0x12, 0x12, 0x00, 0x00, 0x00, 0x00 \
         }
 
-  class NotchBLE {
+  class BLE {
 
     //current ios max mtu
     static const int mMAX_MTU_SIZE = 244;
@@ -40,7 +40,7 @@ namespace  notch {
     uint16_t mReceiveBufferLen;
 
     const int mAPP_BLE_CONN_CFG_TAG = 1;
-    const char* mDEVICE_NAME = "Notch";
+    const char* mDEVICE_NAME = "Test";
     const uint16_t mCOMPANY_IDENTIFIER = 456;
     const int mMIN_CONN_INTERVAL = MSEC_TO_UNITS(7.5, UNIT_1_25_MS);
     const int mMAX_CONN_INTERVAL = MSEC_TO_UNITS(12, UNIT_1_25_MS);
@@ -58,7 +58,7 @@ namespace  notch {
     const int mAPP_ADV_SLOW_DURATION = 18000;    /**< The advertising duration of slow advertising in units of 10 milliseconds. */
 
     const ble_uuid128_t mBaseUUID = {BLE_CUSTOM_BASE};
-    const ble_uuid_t mNotchFactoryUUID = {
+    const ble_uuid_t mFactoryUUID = {
         .uuid = 0x1111, 
         .type = BLE_UUID_TYPE_BLE};
     const uint16_t mBaseServiceUUID = 0x1000;
@@ -199,7 +199,7 @@ namespace  notch {
   };
 
 //now this is for backward compatible communication
-extern NotchBLE notchBLE;
+extern BLE ble;
 
 }
 

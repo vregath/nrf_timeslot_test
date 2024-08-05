@@ -2,7 +2,7 @@
 #ifndef _TIME_SYNCHRON_H__
 #define _TIME_SYNCHRON_H__
 
-namespace  notch {
+namespace  test {
 
     class TimeSynchron {
 

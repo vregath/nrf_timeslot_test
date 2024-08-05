@@ -1,5 +1,5 @@
 
-#include "notch_ble.hpp"
+#include "ble.hpp"
 
 #include "app_error.h"
 #include "ble_advdata.h"
@@ -20,14 +20,14 @@
 
 #include <SEGGER_RTT.h>
 
-namespace notch {
+namespace test {
 
 // defined in sdk_config.h
 //#define APP_BLE_OBSERVER_PRIO   3
 
 //this must be put here because NRF_SDH_BLE_OBSERVER works only in global scope
-NotchBLE notchBLE;
-NRF_SDH_BLE_OBSERVER(m_ble_observer, APP_BLE_OBSERVER_PRIO, notch::NotchBLE::bleEventHandlerEntry, &notchBLE);
+BLE ble;
+NRF_SDH_BLE_OBSERVER(m_ble_observer, APP_BLE_OBSERVER_PRIO, test::BLE::bleEventHandlerEntry, &ble);
 
 NRF_BLE_GATT_DEF(m_gatt);
 
@@ -35,11 +35,11 @@ BLE_ADVERTISING_DEF(m_advertising);                                 /**< Adverti
 
 NRF_BLE_SCAN_DEF(m_scan);
 
-pm_peer_id_t NotchBLE::mPeerID;
-bool NotchBLE::mIsScanRun = false;
-bool NotchBLE::mIsScanShouldRun = true;
+pm_peer_id_t BLE::mPeerID;
+bool BLE::mIsScanRun = false;
+bool BLE::mIsScanShouldRun = true;
 
-void NotchBLE::initialize() {
+void BLE::initialize() {
     mIsStoreConnectedPeer = false;
     mConnectionHandle = BLE_CONN_HANDLE_INVALID;
     stackInit();
@@ -58,7 +58,7 @@ void NotchBLE::initialize() {
     scanStart();
 }
 
-void NotchBLE::doUpdatePhy() {
+void BLE::doUpdatePhy() {
     if (!mDoUpdatePhy) {
         return;
     }
@@ -78,7 +78,7 @@ void NotchBLE::doUpdatePhy() {
     APP_ERROR_CHECK(errorCode);
 }
 
-void NotchBLE::requestAdvertiseRestartWithoutWhiteList() {
+void BLE::requestAdvertiseRestartWithoutWhiteList() {
    
     // if we are connected advertise restart without whitelist happen after central disconnect
     if (mConnectionHandle != BLE_CONN_HANDLE_INVALID) {
@@ -92,7 +92,7 @@ void NotchBLE::requestAdvertiseRestartWithoutWhiteList() {
 }
 
 /*
-void NotchBLE::checkRequestAdvertiseRestartWithoutWhiteList()  {
+void BLE::checkRequestAdvertiseRestartWithoutWhiteList()  {
     if (mAdvRestartWithoutWhiteList) {
         ret_code_t ret;
         ret = sd_ble_gap_disconnect(mConnectionHandle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
@@ -101,12 +101,12 @@ void NotchBLE::checkRequestAdvertiseRestartWithoutWhiteList()  {
 }
 */
 
-void NotchBLE::requestDeletBonds(uint8_t isStoreConnectedPeer) {
+void BLE::requestDeletBonds(uint8_t isStoreConnectedPeer) {
     mIsStoreConnectedPeer = isStoreConnectedPeer;
     advertisingStart(120, true, true);
 }
 
-void NotchBLE::advertisingStart(int durationInSeconds, bool deleteBondsInfo, bool isConnectable) {
+void BLE::advertisingStart(int durationInSeconds, bool deleteBondsInfo, bool isConnectable) {
     if (deleteBondsInfo) {
         deleteBonds();
         //if central disconnect adv will restart, we don't have to disconnect here
@@ -128,7 +128,7 @@ void NotchBLE::advertisingStart(int durationInSeconds, bool deleteBondsInfo, boo
     }
 }
 
-void NotchBLE::refreshAdvertisingBatteryData() {
+void BLE::refreshAdvertisingBatteryData() {
     
     int batteryData = 4;
     if (batteryData == mLastBatteryData) {
@@ -150,7 +150,7 @@ void NotchBLE::refreshAdvertisingBatteryData() {
     
 }
 
-void NotchBLE::scanStart() {
+void BLE::scanStart() {
     if (!mIsScanShouldRun) {
         return;
     }
@@ -163,7 +163,7 @@ void NotchBLE::scanStart() {
     mIsScanRun = true;
 }
 
-void NotchBLE::scanStop() {
+void BLE::scanStop() {
     if (!mIsScanRun) {
         return;
     }
@@ -171,7 +171,7 @@ void NotchBLE::scanStop() {
     mIsScanRun = false;
 }
 
-void NotchBLE::identitiesSet(pm_peer_id_list_skip_t skip) {
+void BLE::identitiesSet(pm_peer_id_list_skip_t skip) {
     pm_peer_id_t peer_ids[BLE_GAP_DEVICE_IDENTITIES_MAX_COUNT];
     uint32_t     peer_id_count = BLE_GAP_DEVICE_IDENTITIES_MAX_COUNT;
 
@@ -184,7 +184,7 @@ void NotchBLE::identitiesSet(pm_peer_id_list_skip_t skip) {
     scanStart();
 }
 
-void NotchBLE::whitelistSet(pm_peer_id_list_skip_t skip) {
+void BLE::whitelistSet(pm_peer_id_list_skip_t skip) {
     pm_peer_id_t peer_ids[BLE_GAP_WHITELIST_ADDR_MAX_COUNT];
     uint32_t     peer_id_count = BLE_GAP_WHITELIST_ADDR_MAX_COUNT;
 
@@ -200,28 +200,28 @@ void NotchBLE::whitelistSet(pm_peer_id_list_skip_t skip) {
     scanStart();
 }
 
-bool NotchBLE::DoSend(const void *data, uint16_t len) {
+bool BLE::DoSend(const void *data, uint16_t len) {
     return SendOnCh(data, len, mResponseCharacteristicHandle);
 }
 
-bool NotchBLE::OldSend(const void *data, uint16_t len) {
+bool BLE::OldSend(const void *data, uint16_t len) {
     return SendOnCh(data, len, mOldResponseCharacteristicHandle);
 }
 
-void NotchBLE::startRSSIReport() {
+void BLE::startRSSIReport() {
     ret_code_t errorCode = sd_ble_gap_rssi_start(mConnectionHandle, 10, 0);   
     APP_ERROR_CHECK(errorCode); 
 }
 
-void NotchBLE::stopRSSIReport() {
+void BLE::stopRSSIReport() {
     ret_code_t errorCode = sd_ble_gap_rssi_stop(mConnectionHandle);   
 }
 
-void NotchBLE::setTXPowerLevel() {
+void BLE::setTXPowerLevel() {
     setTXPowerLevel(mTXPowerLevel);
 }
 
-void NotchBLE::setTXPowerLevel(int8_t txPowerLevel) {
+void BLE::setTXPowerLevel(int8_t txPowerLevel) {
     if (mConnectionHandle == BLE_CONN_HANDLE_INVALID) {
         return;
     }
@@ -241,15 +241,15 @@ void NotchBLE::setTXPowerLevel(int8_t txPowerLevel) {
     }
 }
 
-void NotchBLE::setSendMTUChangeRequest() {
+void BLE::setSendMTUChangeRequest() {
     mMTUChanged = 1;
 }
 
-void NotchBLE::setSendPhyChangeRequest() {
+void BLE::setSendPhyChangeRequest() {
     mPhyChanged = 1;
 }
 
-bool NotchBLE::SendOnCh(const void* data, uint16_t len, const ble_gatts_char_handles_t& ch) {
+bool BLE::SendOnCh(const void* data, uint16_t len, const ble_gatts_char_handles_t& ch) {
 
     // we are not connected
     if (mConnectionHandle == BLE_CONN_HANDLE_INVALID) {
@@ -282,12 +282,12 @@ bool NotchBLE::SendOnCh(const void* data, uint16_t len, const ble_gatts_char_han
     return result == NRF_SUCCESS;
 }
 
-void NotchBLE::bleEventHandlerEntry(ble_evt_t const *p_ble_evt, void *p_context) {
-  NotchBLE *me = (NotchBLE *)p_context;
+void BLE::bleEventHandlerEntry(ble_evt_t const *p_ble_evt, void *p_context) {
+  BLE *me = (BLE *)p_context;
   me->bleEventHandler(p_ble_evt);
 }
 
-void NotchBLE::bleEventHandler(ble_evt_t const *p_ble_evt) {
+void BLE::bleEventHandler(ble_evt_t const *p_ble_evt) {
     ret_code_t errorCode;
 
     //SEGGER_RTT_printf(0, "BLE event %d\n", p_ble_evt->header.evt_id);
@@ -327,17 +327,17 @@ void NotchBLE::bleEventHandler(ble_evt_t const *p_ble_evt) {
                 break;
             }
             if (writeEvent->data[0] == 0xFF) {
-                notch::timeSynchron.setIsMaster(true);
-                notch::timeSynchron.startSDRadioSession();
+                test::timeSynchron.setIsMaster(true);
+                test::timeSynchron.startSDRadioSession();
                 break;
             }
             if (writeEvent->data[0] == 0xAA) {
-                notch::timeSynchron.setIsMaster(false);
-                notch::timeSynchron.startSDRadioSession();
+                test::timeSynchron.setIsMaster(false);
+                test::timeSynchron.startSDRadioSession();
                 break;
             }
             if (writeEvent->data[0] == 0x11) {
-                notch::timeSynchron.stopSDRadioSession();
+                test::timeSynchron.stopSDRadioSession();
                 break;
             }
 
@@ -422,7 +422,7 @@ void NotchBLE::bleEventHandler(ble_evt_t const *p_ble_evt) {
     }
 }
 
-void NotchBLE::advEventHandler(ble_adv_evt_t ble_adv_evt) {
+void BLE::advEventHandler(ble_adv_evt_t ble_adv_evt) {
     ret_code_t err_code;
 
     switch (ble_adv_evt)
@@ -475,7 +475,7 @@ void NotchBLE::advEventHandler(ble_adv_evt_t ble_adv_evt) {
             releasePower();
 
             SEGGER_RTT_printf(0, "RESTART advertise after IDLE\n");
-            notchBLE.advertisingStart(120, false, true);
+            ble.advertisingStart(120, false, true);
 
             //sleep_mode_enter();
             break;
@@ -544,11 +544,11 @@ void NotchBLE::advEventHandler(ble_adv_evt_t ble_adv_evt) {
     }
 }
 
-void NotchBLE::advErrorHandler(uint32_t nrf_error) {
+void BLE::advErrorHandler(uint32_t nrf_error) {
     APP_ERROR_HANDLER(nrf_error);
 }
 
-void NotchBLE::scanEvtHandler(scan_evt_t const *scanEvt) {
+void BLE::scanEvtHandler(scan_evt_t const *scanEvt) {
     ret_code_t err_code;
 
     //SEGGER_RTT_printf(0, "Scan event\n");
@@ -580,7 +580,7 @@ void NotchBLE::scanEvtHandler(scan_evt_t const *scanEvt) {
     
 }
 
-void NotchBLE::pmEventHandler(pm_evt_t const * p_evt) {
+void BLE::pmEventHandler(pm_evt_t const * p_evt) {
     SEGGER_RTT_printf(0, "pmEventHandler: %d\n", p_evt->evt_id);
     pm_handler_on_pm_evt(p_evt);
     //pm_handler_disconnect_on_sec_failure(p_evt);
@@ -596,7 +596,7 @@ void NotchBLE::pmEventHandler(pm_evt_t const * p_evt) {
 
         case PM_EVT_PEERS_DELETE_SUCCEEDED:
             SEGGER_RTT_printf(0, "Peers delete, advertising start\n");
-            notchBLE.advertisingStart(120, false, true);
+            ble.advertisingStart(120, false, true);
             break;
 
         case PM_EVT_PEER_DATA_UPDATE_SUCCEEDED:
@@ -624,7 +624,7 @@ void NotchBLE::pmEventHandler(pm_evt_t const * p_evt) {
             SEGGER_RTT_printf(0, "pmEventHandler: PM_EVT_CONN_SEC_PARAMS_REQ\n");
             /*
             err_code = sd_ble_gap_sec_params_reply(
-                notchBLE.mConnectionHandle, BLE_GAP_SEC_STATUS_SUCCESS, NULL, 
+                ble.mConnectionHandle, BLE_GAP_SEC_STATUS_SUCCESS, NULL, 
                 p_evt->params.conn_sec_params_req.p_context);
         
             APP_ERROR_CHECK(err_code);
@@ -640,17 +640,17 @@ void NotchBLE::pmEventHandler(pm_evt_t const * p_evt) {
     }
 }
 
-void NotchBLE::gattEventHandler(nrf_ble_gatt_t *p_gatt, nrf_ble_gatt_evt_t const *p_evt) {
+void BLE::gattEventHandler(nrf_ble_gatt_t *p_gatt, nrf_ble_gatt_evt_t const *p_evt) {
     if (p_evt->evt_id == NRF_BLE_GATT_EVT_ATT_MTU_UPDATED) {
         SEGGER_RTT_printf(0, "GATT ATT MTU on connection 0x%x changed to %d\n",
                      p_evt->conn_handle,
                      p_evt->params.att_mtu_effective);
-        notchBLE.mMTU = p_evt->params.att_mtu_effective;
-        notchBLE.mMTUChanged = 1;
+        ble.mMTU = p_evt->params.att_mtu_effective;
+        ble.mMTUChanged = 1;
     }
 }
 
-void NotchBLE::onConnParamsEvent(ble_conn_params_evt_t *p_evt) {
+void BLE::onConnParamsEvent(ble_conn_params_evt_t *p_evt) {
     uint32_t err_code;
 
     switch (p_evt->evt_type) {
@@ -666,11 +666,11 @@ void NotchBLE::onConnParamsEvent(ble_conn_params_evt_t *p_evt) {
     }
 }
 
-void NotchBLE::connParamsErrorHandler(uint32_t nrf_error) {
+void BLE::connParamsErrorHandler(uint32_t nrf_error) {
     APP_ERROR_HANDLER(nrf_error);
 }
 
-void NotchBLE::deleteBonds() {
+void BLE::deleteBonds() {
     ret_code_t err_code;
 
     if (!mIsStoreConnectedPeer) {
@@ -695,7 +695,7 @@ void NotchBLE::deleteBonds() {
     }
 }
 
-void NotchBLE::stackInit() {
+void BLE::stackInit() {
     ret_code_t err_code;
 
     err_code = nrf_sdh_enable_request();
@@ -711,15 +711,15 @@ void NotchBLE::stackInit() {
     APP_ERROR_CHECK(err_code);
 }
 
-void NotchBLE::GATTInit() {
-    ret_code_t err_code = nrf_ble_gatt_init(&m_gatt, NotchBLE::gattEventHandler);
+void BLE::GATTInit() {
+    ret_code_t err_code = nrf_ble_gatt_init(&m_gatt, BLE::gattEventHandler);
     APP_ERROR_CHECK(err_code);
 
     err_code = nrf_ble_gatt_att_mtu_periph_set(&m_gatt, NRF_SDH_BLE_GATT_MAX_MTU_SIZE);
     APP_ERROR_CHECK(err_code);
 }
 
-void NotchBLE::GAPParamsInit() {
+void BLE::GAPParamsInit() {
     uint32_t err_code;
     ble_gap_conn_params_t gap_conn_params;
     ble_gap_conn_sec_mode_t sec_mode;
@@ -750,7 +750,7 @@ void NotchBLE::GAPParamsInit() {
     APP_ERROR_CHECK(err_code);
 }
 
-void NotchBLE::connParamsInit() {
+void BLE::connParamsInit() {
     uint32_t err_code;
     ble_conn_params_init_t cp_init;
 
@@ -770,7 +770,7 @@ void NotchBLE::connParamsInit() {
     APP_ERROR_CHECK(err_code);
 }
 
-void NotchBLE::servicesInit() {
+void BLE::servicesInit() {
     uint32_t err_code;
     ble_uuid_t service_uuid;
 
@@ -790,7 +790,7 @@ void NotchBLE::servicesInit() {
     addOldResponseCharacteristic();
 }
 
-void NotchBLE::addDeviceInformationService() {
+void BLE::addDeviceInformationService() {
     uint32_t err_code;
     ble_dis_init_t dis_init;
     memset(&dis_init, 0, sizeof(dis_init));
@@ -813,7 +813,7 @@ void NotchBLE::addDeviceInformationService() {
     APP_ERROR_CHECK(err_code);
 }
 
-void NotchBLE::setAdvertisingData(ble_advdata_t &advData, ble_advdata_t &scanRespData) {
+void BLE::setAdvertisingData(ble_advdata_t &advData, ble_advdata_t &scanRespData) {
     memset(&advData, 0, sizeof(ble_advdata_t));
     memset(&scanRespData, 0, sizeof(ble_advdata_t));
 
@@ -844,7 +844,7 @@ void NotchBLE::setAdvertisingData(ble_advdata_t &advData, ble_advdata_t &scanRes
     scanRespData.p_manuf_specific_data = &mBLEManuData;
 }
 
-void NotchBLE::advertisingInit(int durationInSeconds, bool isConnectable) {
+void BLE::advertisingInit(int durationInSeconds, bool isConnectable) {
 
     uint32_t               err_code;
     ble_advertising_init_t init;
@@ -881,7 +881,7 @@ void NotchBLE::advertisingInit(int durationInSeconds, bool isConnectable) {
 }
 
 // copy from ble_advertising.c because we need custom init function
-bool NotchBLE::config_is_valid(ble_adv_modes_config_t const * const p_config) {
+bool BLE::config_is_valid(ble_adv_modes_config_t const * const p_config) {
     if ((p_config->ble_adv_directed_high_duty_enabled == true) &&
         (p_config->ble_adv_extended_enabled == true))
     {
@@ -901,7 +901,7 @@ bool NotchBLE::config_is_valid(ble_adv_modes_config_t const * const p_config) {
 }
 
 // copy from ble_advertising.c because we need custom init function
-uint16_t NotchBLE::adv_set_data_size_max_get(ble_advertising_t const * const p_advertising) {
+uint16_t BLE::adv_set_data_size_max_get(ble_advertising_t const * const p_advertising) {
     uint16_t adv_set_data_size_max;
 
     if (p_advertising->adv_modes_config.ble_adv_extended_enabled == true)
@@ -921,7 +921,7 @@ uint16_t NotchBLE::adv_set_data_size_max_get(ble_advertising_t const * const p_a
 }
 
 
-uint32_t NotchBLE::custom_ble_advertising_init(ble_advertising_t * const p_advertising,
+uint32_t BLE::custom_ble_advertising_init(ble_advertising_t * const p_advertising,
                               ble_advertising_init_t const * const p_init, 
                               uint8_t type) {
                               
@@ -981,7 +981,7 @@ uint32_t NotchBLE::custom_ble_advertising_init(ble_advertising_t * const p_adver
     return ret;
 }
 
-void NotchBLE::peerManagerInit() {
+void BLE::peerManagerInit() {
     ble_gap_sec_params_t sec_param;
     ret_code_t           err_code;
 
@@ -1011,7 +1011,7 @@ void NotchBLE::peerManagerInit() {
     APP_ERROR_CHECK(err_code);
 }
 
-void NotchBLE::scanInit() {
+void BLE::scanInit() {
     ret_code_t err_code;
     nrf_ble_scan_init_t scanInitData;
     memset(&scanInitData, 0, sizeof(scanInitData));
@@ -1025,11 +1025,11 @@ void NotchBLE::scanInit() {
     err_code = nrf_ble_scan_filters_enable(&m_scan, NRF_BLE_SCAN_UUID_FILTER, false);
     APP_ERROR_CHECK(err_code);
 
-    err_code = nrf_ble_scan_filter_set(&m_scan, SCAN_UUID_FILTER, &mNotchFactoryUUID);
+    err_code = nrf_ble_scan_filter_set(&m_scan, SCAN_UUID_FILTER, &mFactoryUUID);
     APP_ERROR_CHECK(err_code);
 }
 
-void NotchBLE::addCommandCharacteristic() {
+void BLE::addCommandCharacteristic() {
   uint32_t err_code;
 
   ble_uuid_t char_uuid;
@@ -1063,7 +1063,7 @@ void NotchBLE::addCommandCharacteristic() {
   APP_ERROR_CHECK(err_code);
 }
 
-void NotchBLE::addResponseCharacteristic() {
+void BLE::addResponseCharacteristic() {
   uint32_t err_code;
 
   ble_uuid_t char_uuid;
@@ -1108,7 +1108,7 @@ void NotchBLE::addResponseCharacteristic() {
   APP_ERROR_CHECK(err_code);
 }
 
-void NotchBLE::addStartBondingCharacteristic() {
+void BLE::addStartBondingCharacteristic() {
   uint32_t err_code;
 
   ble_uuid_t char_uuid;
@@ -1153,7 +1153,7 @@ void NotchBLE::addStartBondingCharacteristic() {
   APP_ERROR_CHECK(err_code);
 }
 
-void NotchBLE::addOldResponseCharacteristic() {
+void BLE::addOldResponseCharacteristic() {
   uint32_t err_code;
 
   ble_uuid_t char_uuid;

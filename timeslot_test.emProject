@@ -156,9 +156,9 @@
       <file file_name="SDK_17.1.0/components/softdevice/common/nrf_sdh_ble.c" />
       <file file_name="SDK_17.1.0/components/softdevice/common/nrf_sdh_soc.c" />
     </folder>
-    <folder Name="notch_ble">
-      <file file_name="src/notch_ble/notch_ble.cpp" />
-      <file file_name="src/notch_ble/notch_ble.hpp" />
+    <folder Name="ble">
+      <file file_name="src/ble/ble.cpp" />
+      <file file_name="src/ble/ble.hpp" />
     </folder>
     <folder Name="config">
       <file file_name="config/nrfx_config_1.h" />

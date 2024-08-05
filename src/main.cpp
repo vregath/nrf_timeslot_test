@@ -6,7 +6,7 @@
 #include "nrf_log_default_backends.h"
 #include <SEGGER_RTT.h>
 
-#include "notch_ble/notch_ble.hpp"
+#include "ble/ble.hpp"
 
 #include "time_synchron/time_synchron.h"
 #include "time_synchron/time_sync.h"
@@ -56,14 +56,14 @@ int main() {
    
     DBGLOGI("MAIN", "Init");
 
-    notch::notchBLE.initialize();
+    test::ble.initialize();
 
-    notch::timeSynchron.initialize();
+    test::timeSynchron.initialize();
 
-    notch::notchBLE.advertisingStart(120, false, true);
+    test::ble.advertisingStart(120, false, true);
     
     while (1) {
 
-        notch::timeSynchron.doStartSDRadioSession();
+        test::timeSynchron.doStartSDRadioSession();
     }
 }
