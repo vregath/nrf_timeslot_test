@@ -253,15 +253,35 @@ static sync_pkt_t * tx_buf_get(void)
 volatile uint32_t m_prev_sync_pkt_timer;
 volatile uint32_t m_prev_sync_pkt_counter;
 
+static int isPacketReceived = 0;
 void RADIO_IRQHandler(void)
 {
-    DBGLOGI("TS", "IRQ_handler");
+    //DBGLOGI("TS", "IRQ_handler");
     if (NRF_RADIO->EVENTS_RXREADY != 0) {
         NRF_RADIO->EVENTS_RXREADY = 0;
         (void)NRF_RADIO->EVENTS_RXREADY;
         //DBGLOGI("TS", "EVENTS_RXREADY");
+        isPacketReceived = 0;
+        //ts_test_pin_set();
     }
 
+    if (NRF_RADIO->EVENTS_TXREADY != 0) {
+        NRF_RADIO->EVENTS_TXREADY = 0;
+        (void)NRF_RADIO->EVENTS_TXREADY;
+        //DBGLOGI("TS", "EVENTS_TXREADY");
+        //ts_test_pin_set();
+    }
+
+    if (NRF_RADIO->EVENTS_DISABLED != 0) {
+        NRF_RADIO->EVENTS_DISABLED = 0;
+        (void)NRF_RADIO->EVENTS_DISABLED;
+        DBGLOGI("TS", "EVENTS_DISABLED");
+        if (!isPacketReceived) {
+            //ts_test_pin_clear();
+        }
+    }
+
+    /*
     if (NRF_RADIO->EVENTS_ADDRESS != 0) {
         NRF_RADIO->EVENTS_ADDRESS = 0;
         (void)NRF_RADIO->EVENTS_ADDRESS;
@@ -291,15 +311,19 @@ void RADIO_IRQHandler(void)
         (void)NRF_RADIO->EVENTS_SYNC;
         DBGLOGI("TS", "EVENTS_SYNC");
     }
+    */
 
     if (NRF_RADIO->EVENTS_END != 0)
     {
         NRF_RADIO->EVENTS_END = 0;
         (void)NRF_RADIO->EVENTS_END;
         
+        //ts_test_pin_clear();
+
         if (m_radio_state == RADIO_STATE_RX &&
            (NRF_RADIO->CRCSTATUS & RADIO_CRCSTATUS_CRCSTATUS_Msk) == (RADIO_CRCSTATUS_CRCSTATUS_CRCOk << RADIO_CRCSTATUS_CRCSTATUS_Pos))
         {
+            isPacketReceived = 1;
             DBGLOGI("TS", "Sync packet received %d", m_sync_packet_count);
             sync_pkt_t * p_pkt;
             bool         adjustment_procedure_started;
@@ -424,7 +448,7 @@ static nrf_radio_signal_callback_return_param_t * radio_callback (uint8_t signal
         break;
 
     case NRF_RADIO_CALLBACK_SIGNAL_TYPE_RADIO:
-        DBGLOGI("TS", "call IRQ_handler");
+        //DBGLOGI("TS", "call IRQ_handler");
         RADIO_IRQHandler();
         break;
 
@@ -501,15 +525,17 @@ static void update_radio_parameters(sync_pkt_t * p_pkt)
 
     NRF_RADIO->INTENCLR = 0xFFFFFFFF;
     NRF_RADIO->INTENSET = RADIO_INTENSET_END_Msk | RADIO_INTENSET_SYNC_Msk | RADIO_INTENSET_CRCERROR_Msk |
-                          RADIO_INTENSET_ADDRESS_Msk | RADIO_INTENSET_PAYLOAD_Msk | RADIO_INTENSET_PHYEND_Msk;
+                          RADIO_INTENSET_ADDRESS_Msk | RADIO_INTENSET_PAYLOAD_Msk | RADIO_INTENSET_PHYEND_Msk | 
+                          RADIO_INTENSET_RXREADY_Msk | RADIO_INTENSET_TXREADY_Msk | RADIO_INTENSET_DISABLED_Msk;
 
     NVIC_EnableIRQ(RADIO_IRQn);
 }
 
 void timeslot_end_handler(void)
 {
+    ts_test_pin_clear();
     NRF_RADIO->TASKS_DISABLE = 1;
-    NRF_RADIO->INTENCLR      = 0xFFFFFFFF;
+    //NRF_RADIO->INTENCLR      = 0xFFFFFFFF;
 
     ppi_radio_rx_disable();
 
@@ -518,6 +544,7 @@ void timeslot_end_handler(void)
 
 void timeslot_begin_handler(void)
 {
+    ts_test_pin_set();
     sync_pkt_t * p_pkt;
 
     m_total_timeslot_length = 0;
@@ -1465,4 +1492,22 @@ uint64_t ts_timestamp_get_ticks_u64(void)
     timestamp += (uint64_t) sync_timer_val;
 
     return timestamp;
+}
+
+static int testPinTaskId = 1;
+void ts_test_pin_configure(uint32_t testPin) {
+    nrf_gpiote_task_configure(testPinTaskId, testPin, NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_LOW);
+    nrf_gpiote_task_enable(testPinTaskId);
+}
+
+void ts_test_pin_toggle() {
+    NRF_GPIOTE->TASKS_OUT[testPinTaskId] = 1;
+}
+
+void ts_test_pin_set() {
+    NRF_GPIOTE->TASKS_SET[testPinTaskId] = 1;
+}
+
+void ts_test_pin_clear() {
+    NRF_GPIOTE->TASKS_CLR[testPinTaskId] = 1;
 }

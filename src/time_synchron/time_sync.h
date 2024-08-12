@@ -243,6 +243,12 @@ uint32_t ts_timestamp_get_ticks_u32(void);
  */
 uint64_t ts_timestamp_get_ticks_u64(void);
 
+void ts_test_pin_configure(uint32_t testpin);
+
+void ts_test_pin_set();
+void ts_test_pin_clear();
+void ts_test_pin_toggle();
+
 #ifdef __cplusplus
 }
 #endif

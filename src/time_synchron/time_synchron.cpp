@@ -3,12 +3,15 @@
 #include "time_sync.h"
 
 #include "nrf_gpiote.h"
+#include "nrf_gpio.h"
 
 #include "log/log.h"
 
 namespace test {
 
     TimeSynchron timeSynchron;
+
+    #define TEST_PIN    NRF_GPIO_PIN_MAP(1, 9)
 
     static void ts_event_handler(const ts_evt_t *evt) {
         switch(evt->type) {
@@ -45,6 +48,8 @@ namespace test {
         };
 
         ts_enable(&rt_config);
+
+        ts_test_pin_configure(TEST_PIN);
     }
 
     void TimeSynchron::start(bool isMaster) {
